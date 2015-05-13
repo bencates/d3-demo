@@ -1,0 +1,127 @@
+<!doctype html>
+<html>
+  <head>
+    <script src="/js/d3.min.js"></script>
+
+    <style>
+      .chart text {
+        fill: slategray;
+        font: 10px sans-serif;
+        text-anchor: end;
+      }
+
+      .axis text {
+          font: 10px sans-serif;
+      }
+
+      .axis path,
+      .axis line {
+          fill: none;
+          stroke: slategray;
+          shape-rendering: crispEdges;
+      }
+    </style>
+  </head>
+
+  <body>
+    <svg class="chart"></svg>
+
+    <script>
+      function getData() {
+        var data = [];
+
+        var len = 4 + Math.floor(Math.random() * 3);
+
+        for (var i = 0; i < len; i += 1) {
+          data.push({
+            name: String.fromCharCode(65 + i),
+            value: Math.floor(Math.random() * 101)
+          });
+        }
+
+        return data;
+      }
+
+      var margin = {top: 10, right: 10, bottom: 20, left: 20},
+          width = 450 - margin.left - margin.right,
+          height = 150 - margin.top - margin.bottom;
+
+      var x = d3.scale.linear()
+        .domain([0, 100])
+        .range([0, width]);
+
+      var y = d3.scale.ordinal()
+        .rangeBands([0, height]);
+
+      var xAxis = d3.svg.axis()
+        .scale(x)
+        .ticks(5)
+        .orient('bottom');
+
+      var chart = d3.select('.chart')
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom);
+
+      var bars = chart.append('g')
+        .attr('class', 'bars')
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
+
+      var xContainer = chart.append('g')
+        .attr('class', 'x axis')
+        .attr('transform', 'translate(' + margin.left + ',' + (margin.top + height) + ')')
+        .call(xAxis);
+
+      var yContainer = chart.append('g')
+        .attr('class', 'y axis')
+        .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+
+      function update(data) {
+        y.domain(data.map(function (d) { return d.name; }));
+
+        var bar = bars.selectAll('rect')
+          .data(data, function (d) { return d.name });
+
+        var p = d3.scale.linear()
+          .domain([0, 100]).range([0, 1]);
+        var c = d3.interpolate('#1E4667', '#7DC4FF');
+
+        bar.enter().append('rect')
+          .attr('transform', function(d) {
+            return 'translate(0,' + height + ')';
+          })
+          .attr('width', function (d) { return x(d.value); })
+          .attr('height', 0)
+          .attr('fill', c(p(0)))
+
+        bar.exit().transition().duration(1000)
+          .attr('height', 0)
+          .attr('transform', function(d) {
+            return 'translate(0,' + height + ')';
+          })
+          .remove()
+
+        bar.transition().duration(1000)
+          .attr('transform', function(d) {
+            return 'translate(0,' + y(d.name) + ')';
+          })
+          .attr('width', function (d) { return x(d.value); })
+          .attr('height', y.rangeBand() - 1)
+          .attr('fill', function (d) { return c(p(d.value)); })
+
+        var yAxis = d3.svg.axis()
+          .scale(y)
+          .orient('left')
+          .tickSize(0, 0)
+          .tickPadding(9);
+
+        yContainer.transition().duration(1000).call(yAxis)
+      }
+
+      update(getData());
+
+      setInterval(function () {
+        update(getData());
+      }, 1500);
+    </script>
+  </body>
+</html>
